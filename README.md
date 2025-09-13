@@ -19,3 +19,15 @@ The integration does not communicate with any real devices and is intended as a 
      username: YOUR_USERNAME
      password: YOUR_PASSWORD
    ```
+
+## Debug Logging
+
+To enable debug logging for this integration, add the following to your `configuration.yaml`:
+
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.salus: debug
+```
+

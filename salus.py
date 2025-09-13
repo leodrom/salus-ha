@@ -7,8 +7,11 @@
 # The security token is requested for each operation
 
 from dataclasses import dataclass
+import logging
 import requests
 from html.parser import HTMLParser
+
+_LOGGER = logging.getLogger(__name__)
 
 # Salus Device Class
 @dataclass
@@ -160,14 +163,16 @@ class Salus:
     def check_device_battery(self, device_id):
         url = 'https://salus-it500.com/ota/battery_check.php'  # Adjust the URL as per your server
         params = {'devId': device_id}
-        
+
+        _LOGGER.debug("Checking battery for device %s", device_id)
         try:
             response = self.session.get(url, params=params)
             response.raise_for_status()  # Raise an exception for HTTP errors
             battery_data = response.json()  # Assuming the response is in JSON format
+            _LOGGER.debug("Received battery data: %s", battery_data)
             return battery_data
         except requests.exceptions.RequestException as e:
-            print(f"Error while checking battery: {e}")
+            _LOGGER.error("Error while checking battery: %s", e)
             return None
         
     # Check login responce status. that function checks responce after login and try to find the block with error message
