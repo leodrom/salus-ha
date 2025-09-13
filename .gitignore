@@ -6,6 +6,14 @@
 !sandbox.py
 !.gitignore
 !README.md
+!hacs.json
+!custom_components/
+!custom_components/salus/
+!custom_components/salus/**
 
 # Always ignore the SALUS folder and everything inside it
 SALUS/
+
+# Ignore test cache
+.pytest_cache/
+__pycache__/

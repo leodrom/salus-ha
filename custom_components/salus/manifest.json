@@ -1,0 +1,9 @@
+{
+  "domain": "salus",
+  "name": "Salus",
+  "version": "0.1.0",
+  "documentation": "https://github.com/user/salus-ha",
+  "requirements": [],
+  "codeowners": ["@user"],
+  "iot_class": "local_polling"
+}
