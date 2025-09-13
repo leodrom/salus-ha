@@ -44,3 +44,12 @@ class SalusRoomTemperatureSensor(SensorEntity):
     @property
     def unique_id(self) -> str:
         return f"{self._device.id}_temperature"
+
+    @property
+    def device_info(self) -> dict:
+        """Return device information for this sensor."""
+        return {
+            "identifiers": {(DOMAIN, self._device.id)},
+            "name": self._device.name,
+            "manufacturer": "Salus",
+        }
