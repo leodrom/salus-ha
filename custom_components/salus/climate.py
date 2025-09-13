@@ -37,6 +37,15 @@ class SalusThermostat(ClimateEntity):
     def unique_id(self) -> str:
         return self._device.id
 
+    @property
+    def device_info(self) -> dict:
+        """Return device information for this thermostat."""
+        return {
+            "identifiers": {(DOMAIN, self._device.id)},
+            "name": self._device.name,
+            "manufacturer": "Salus",
+        }
+
     async def async_added_to_hass(self) -> None:
         self._device.register_listener(self.async_write_ha_state)
 
