@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from homeassistant.components.climate.const import HVACMode
+from homeassistant.helpers.discovery import async_load_platform
 
 DOMAIN = "salus"
 
@@ -30,6 +31,10 @@ async def async_setup(hass, config):
     device = SalusDevice()
     hass.data[DOMAIN] = device
 
-    hass.helpers.discovery.load_platform("climate", DOMAIN, {}, config)
-    hass.helpers.discovery.load_platform("sensor", DOMAIN, {}, config)
+    hass.async_create_task(
+        async_load_platform(hass, "climate", DOMAIN, {}, config)
+    )
+    hass.async_create_task(
+        async_load_platform(hass, "sensor", DOMAIN, {}, config)
+    )
     return True
