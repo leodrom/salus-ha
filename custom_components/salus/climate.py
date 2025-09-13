@@ -17,9 +17,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Salus climate entity."""
     _LOGGER.info("Setting up Salus climate entity")
-    device: SalusDevice = hass.data[DOMAIN]["device"]
-    entity = SalusThermostat(device)
-    async_add_entities([entity])
+    devices: list[SalusDevice] = hass.data[DOMAIN]["devices"]
+    entities = [SalusThermostat(device) for device in devices]
+    async_add_entities(entities)
 
 
 class SalusThermostat(ClimateEntity):
@@ -28,10 +28,14 @@ class SalusThermostat(ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
-    _attr_name = "Salus Thermostat"
 
     def __init__(self, device: SalusDevice) -> None:
         self._device = device
+        self._attr_name = device.name
+
+    @property
+    def unique_id(self) -> str:
+        return self._device.id
 
     async def async_added_to_hass(self) -> None:
         self._device.register_listener(self.async_write_ha_state)

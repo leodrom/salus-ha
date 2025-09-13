@@ -32,7 +32,9 @@ CONFIG_SCHEMA = vol.Schema(
 class SalusDevice:
     """Dummy device holding the Salus thermostat state."""
 
-    def __init__(self) -> None:
+    def __init__(self, device_id: str, name: str) -> None:
+        self.id = device_id
+        self.name = name
         self.room_temperature: float = 20.0
         self.target_temperature: float = 22.0
         self.hvac_mode: HVACMode = HVACMode.HEAT
@@ -56,9 +58,15 @@ async def async_setup(hass, config):
     _LOGGER.info("Setting up Salus integration")
     _LOGGER.debug("Configuration username: %s", username)
 
-    device = SalusDevice()
+    devices = [
+        SalusDevice("device_1", "Salus Device 1"),
+        SalusDevice("device_2", "Salus Device 2"),
+        SalusDevice("device_3", "Salus Device 3"),
+        SalusDevice("device_4", "Salus Device 4"),
+    ]
+
     hass.data[DOMAIN] = {
-        "device": device,
+        "devices": devices,
         "username": username,
         "password": password,
     }
