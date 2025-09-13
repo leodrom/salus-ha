@@ -6,13 +6,27 @@ import logging
 
 from homeassistant.components.climate.const import HVACMode
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-
-PLATFORMS = ["climate", "sensor"]
+from homeassistant.helpers.discovery import async_load_platform
+import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 
 DOMAIN = "salus"
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_USERNAME): cv.string,
+                vol.Required(CONF_PASSWORD): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 class SalusDevice:
@@ -36,15 +50,10 @@ class SalusDevice:
 
 
 async def async_setup(hass, config):
-    """Set up the Salus integration (placeholder for YAML support)."""
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
-
-async def async_setup_entry(hass, entry):
-    """Set up Salus from a config entry."""
-    username = entry.data[CONF_USERNAME]
-    password = entry.data[CONF_PASSWORD]
+    """Set up the Salus integration."""
+    conf = config[DOMAIN]
+    username = conf[CONF_USERNAME]
+    password = conf[CONF_PASSWORD]
 
     _LOGGER.info("Setting up Salus integration")
     _LOGGER.debug("Configuration username: %s", username)
@@ -56,19 +65,18 @@ async def async_setup_entry(hass, entry):
         SalusDevice("device_4", "Salus Device 4"),
     ]
 
-    hass.data[DOMAIN][entry.entry_id] = {
+    hass.data[DOMAIN] = {
         "devices": devices,
         "username": username,
         "password": password,
     }
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _LOGGER.debug("Creating Salus platforms")
+    hass.async_create_task(
+        async_load_platform(hass, "climate", DOMAIN, {}, config)
+    )
+    hass.async_create_task(
+        async_load_platform(hass, "sensor", DOMAIN, {}, config)
+    )
     _LOGGER.info("Salus integration setup complete")
-    return True
-
-
-async def async_unload_entry(hass, entry):
-    """Unload a config entry."""
-    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    hass.data[DOMAIN].pop(entry.entry_id)
     return True
