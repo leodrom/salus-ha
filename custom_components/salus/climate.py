@@ -7,7 +7,6 @@ import logging
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.components.climate.const import HVACMode
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.helpers.device_registry import DeviceInfo
 
 from . import DOMAIN, SalusDevice
 
@@ -15,11 +14,10 @@ from . import DOMAIN, SalusDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up Salus climate entities from config entry."""
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up the Salus climate entity."""
     _LOGGER.info("Setting up Salus climate entity")
-    data = hass.data[DOMAIN][entry.entry_id]
-    devices: list[SalusDevice] = data["devices"]
+    devices: list[SalusDevice] = hass.data[DOMAIN]["devices"]
     entities = [SalusThermostat(device) for device in devices]
     async_add_entities(entities)
 
@@ -34,11 +32,6 @@ class SalusThermostat(ClimateEntity):
     def __init__(self, device: SalusDevice) -> None:
         self._device = device
         self._attr_name = device.name
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.id)},
-            name=device.name,
-            manufacturer="Salus",
-        )
 
     @property
     def unique_id(self) -> str:

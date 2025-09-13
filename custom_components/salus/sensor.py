@@ -6,7 +6,6 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import UnitOfTemperature
-from homeassistant.helpers.device_registry import DeviceInfo
 
 from . import DOMAIN, SalusDevice
 
@@ -14,11 +13,10 @@ from . import DOMAIN, SalusDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up the Salus room temperature sensors from config entry."""
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up the Salus room temperature sensors."""
     _LOGGER.info("Setting up Salus room temperature sensors")
-    data = hass.data[DOMAIN][entry.entry_id]
-    devices: list[SalusDevice] = data["devices"]
+    devices: list[SalusDevice] = hass.data[DOMAIN]["devices"]
     sensors = [SalusRoomTemperatureSensor(device) for device in devices]
     async_add_entities(sensors)
 
@@ -30,11 +28,6 @@ class SalusRoomTemperatureSensor(SensorEntity):
         self._device = device
         self._attr_name = f"{device.name} Room Temperature"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.id)},
-            name=device.name,
-            manufacturer="Salus",
-        )
 
     async def async_added_to_hass(self) -> None:
         self._device.register_listener(self.async_write_ha_state)
