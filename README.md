@@ -4,7 +4,7 @@ This custom integration provides a dummy Salus thermostat for Home Assistant. It
 
 - Room temperature sensor (returns a constant value of 23°C)
 - Target temperature sensor
-- Thermostat entity with `auto` and `off` modes
+- Thermostat entity with `heat` and `off` modes
 
 The integration does not communicate with any real devices and is intended as a starting point for further development.
 

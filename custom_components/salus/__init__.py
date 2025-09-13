@@ -35,7 +35,7 @@ class SalusDevice:
     def __init__(self) -> None:
         self.room_temperature: float = 20.0
         self.target_temperature: float = 22.0
-        self.hvac_mode: HVACMode = HVACMode.AUTO
+        self.hvac_mode: HVACMode = HVACMode.HEAT
         self._listeners: list[callable] = []
 
     def register_listener(self, callback) -> None:
