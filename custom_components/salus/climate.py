@@ -14,10 +14,10 @@ from . import DOMAIN, SalusDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the Salus climate entity."""
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up the Salus climate entity from a config entry."""
     _LOGGER.info("Setting up Salus climate entity")
-    devices: list[SalusDevice] = hass.data[DOMAIN]["devices"]
+    devices: list[SalusDevice] = hass.data[DOMAIN][entry.entry_id]["devices"]
     entities = [SalusThermostat(device) for device in devices]
     async_add_entities(entities)
 
@@ -44,6 +44,7 @@ class SalusThermostat(ClimateEntity):
             "identifiers": {(DOMAIN, self._device.id)},
             "name": self._device.name,
             "manufacturer": "Salus",
+            "serial_number": self._device.id,
         }
 
     async def async_added_to_hass(self) -> None:

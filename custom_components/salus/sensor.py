@@ -13,10 +13,10 @@ from . import DOMAIN, SalusDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the Salus room temperature sensors."""
     _LOGGER.info("Setting up Salus room temperature sensors")
-    devices: list[SalusDevice] = hass.data[DOMAIN]["devices"]
+    devices: list[SalusDevice] = hass.data[DOMAIN][entry.entry_id]["devices"]
     sensors = [SalusRoomTemperatureSensor(device) for device in devices]
     async_add_entities(sensors)
 
@@ -52,4 +52,5 @@ class SalusRoomTemperatureSensor(SensorEntity):
             "identifiers": {(DOMAIN, self._device.id)},
             "name": self._device.name,
             "manufacturer": "Salus",
+            "serial_number": self._device.id,
         }
