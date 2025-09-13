@@ -27,7 +27,7 @@ class SalusThermostat(ClimateEntity):
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
-    _attr_hvac_modes = [HVACMode.AUTO, HVACMode.OFF]
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_name = "Salus Thermostat"
 
     def __init__(self, device: SalusDevice) -> None:
