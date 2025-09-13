@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.climate.const import HVACMode
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.discovery import async_load_platform
@@ -9,6 +11,9 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
 DOMAIN = "salus"
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 CONFIG_SCHEMA = vol.Schema(
@@ -48,6 +53,9 @@ async def async_setup(hass, config):
     username = conf[CONF_USERNAME]
     password = conf[CONF_PASSWORD]
 
+    _LOGGER.info("Setting up Salus integration")
+    _LOGGER.debug("Configuration username: %s", username)
+
     device = SalusDevice()
     hass.data[DOMAIN] = {
         "device": device,
@@ -55,10 +63,12 @@ async def async_setup(hass, config):
         "password": password,
     }
 
+    _LOGGER.debug("Creating Salus platforms")
     hass.async_create_task(
         async_load_platform(hass, "climate", DOMAIN, {}, config)
     )
     hass.async_create_task(
         async_load_platform(hass, "sensor", DOMAIN, {}, config)
     )
+    _LOGGER.info("Salus integration setup complete")
     return True

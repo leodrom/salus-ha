@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.components.climate.const import HVACMode
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
@@ -9,8 +11,12 @@ from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from . import DOMAIN, SalusDevice
 
 
+_LOGGER = logging.getLogger(__name__)
+
+
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Salus climate entity."""
+    _LOGGER.info("Setting up Salus climate entity")
     device: SalusDevice = hass.data[DOMAIN]["device"]
     entity = SalusThermostat(device)
     async_add_entities([entity])
@@ -43,10 +49,12 @@ class SalusThermostat(ClimateEntity):
         return self._device.target_temperature
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        _LOGGER.info("Setting HVAC mode to %s", hvac_mode)
         self._device.hvac_mode = hvac_mode
         self._device._notify()
 
     async def async_set_temperature(self, **kwargs) -> None:
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is not None:
+            _LOGGER.info("Setting target temperature to %s", temperature)
             self._device.target_temperature = temperature
             self._device._notify()
