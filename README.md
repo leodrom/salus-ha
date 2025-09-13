@@ -12,13 +12,8 @@ The integration does not communicate with any real devices and is intended as a 
 
 1. Add this repository to HACS as a custom repository.
 2. Install the **Salus** integration from HACS.
-3. Add the integration to your `configuration.yaml` with credentials and restart Home Assistant:
-
-   ```yaml
-   salus:
-     username: YOUR_USERNAME
-     password: YOUR_PASSWORD
-   ```
+3. Add the integration via **Settings → Devices & Services** in Home Assistant and
+   enter your Salus username and password when prompted.
 
 ## Debug Logging
 

@@ -1,6 +1,7 @@
 {
   "domain": "salus",
   "name": "Salus",
+  "config_flow": true,
   "version": "0.1.0",
   "documentation": "https://github.com/user/salus-ha",
   "requirements": [],
