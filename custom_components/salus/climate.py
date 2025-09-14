@@ -18,7 +18,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the Salus climate entity from a config entry."""
     _LOGGER.info("Setting up Salus climate entity")
     devices: list[SalusDevice] = hass.data[DOMAIN][entry.entry_id]["devices"]
-    entities = [SalusThermostat(device) for device in devices]
+    api = hass.data[DOMAIN][entry.entry_id]["api"]
+    entities = [SalusThermostat(device, api) for device in devices]
     async_add_entities(entities)
 
 
@@ -29,8 +30,9 @@ class SalusThermostat(ClimateEntity):
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
 
-    def __init__(self, device: SalusDevice) -> None:
+    def __init__(self, device: SalusDevice, api) -> None:
         self._device = device
+        self._api = api
         self._attr_name = device.name
 
     @property
@@ -70,5 +72,19 @@ class SalusThermostat(ClimateEntity):
     async def async_set_temperature(self, **kwargs) -> None:
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is not None:
             _LOGGER.info("Setting target temperature to %s", temperature)
+            await self.hass.async_add_executor_job(
+                self._api.set_temperature, self._device.id, temperature
+            )
             self._device.target_temperature = temperature
             self._device._notify()
+
+    async def async_update(self) -> None:
+        info = await self.hass.async_add_executor_job(
+            self._api.get_device_info, self._device.id
+        )
+        self._device.room_temperature = info.current_temperature
+        self._device.target_temperature = info.target_temperature
+        self._device.hvac_mode = (
+            HVACMode.HEAT if info.status == "on" else HVACMode.OFF
+        )
+        self._device._notify()
