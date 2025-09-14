@@ -250,3 +250,17 @@ class Salus:
         }
         response = requests.post(url, data=payload)
         return response
+
+    # Set the HVAC mode (on/off) for the device
+    def set_hvac_mode(self, dev_id, hvac_mode):
+        url = "https://salus-it500.com/includes/set.php"
+        payload = {
+            'token': self.token,
+            'devId': dev_id,
+        }
+
+        # Salus API expects 1 for on (heat) and 0 for off
+        payload['power'] = 1 if str(hvac_mode).lower() != 'off' else 0
+
+        response = requests.post(url, data=payload)
+        return response
