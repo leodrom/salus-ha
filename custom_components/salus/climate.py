@@ -66,6 +66,9 @@ class SalusThermostat(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         _LOGGER.info("Setting HVAC mode to %s", hvac_mode)
+        await self.hass.async_add_executor_job(
+            self._api.set_hvac_mode, self._device.id, hvac_mode.value
+        )
         self._device.hvac_mode = hvac_mode
         self._device._notify()
 
