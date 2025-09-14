@@ -7,9 +7,10 @@ import logging
 from homeassistant import config_entries
 from homeassistant.components.climate.const import HVACMode
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.exceptions import ConfigEntryAuthFailed
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-import random
+from .salus import Salus
 
 DOMAIN = "salus"
 
@@ -31,13 +32,15 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 class SalusDevice:
-    """Dummy device holding the Salus thermostat state."""
+    """Representation of a Salus thermostat."""
 
-    def __init__(self, device_id: str, name: str) -> None:
+    def __init__(self, device_id: str, name: str, code: str = "", online: bool = False) -> None:
         self.id = device_id
         self.name = name
-        self.room_temperature: float = 20.0
-        self.target_temperature: float = 22.0
+        self.code = code
+        self.online = online
+        self.room_temperature: float = 0.0
+        self.target_temperature: float = 0.0
         self.hvac_mode: HVACMode = HVACMode.HEAT
         self._listeners: list[callable] = []
 
@@ -75,26 +78,55 @@ async def async_setup_entry(hass, entry: config_entries.ConfigEntry):
     _LOGGER.info("Setting up Salus integration")
     _LOGGER.debug("Configuration username: %s", username)
 
-    device_ids: list[str] | None = entry.data.get("device_ids")
-    if device_ids is None:
-        device_ids = [f"{random.randint(0, 99999999):08d}" for _ in range(4)]
-        hass.config_entries.async_update_entry(
-            entry, data={**entry.data, "device_ids": device_ids}
-        )
+    api = Salus()
 
-    devices = [
-        SalusDevice(device_id, f"Salus Device {index}")
-        for index, device_id in enumerate(device_ids, start=1)
-    ]
+    def _login_and_fetch():
+        api.do_login(username, password)
+        if not api.check_login_error_status():
+            raise ConfigEntryAuthFailed(api.error_message)
+        token = api.parse_token()
+        devices_raw = api.parse_devices_page()
+        devices_detailed = []
+        for dev in devices_raw:
+            try:
+                devices_detailed.append(api.get_device_info(dev.id))
+            except Exception as err:  # pragma: no cover - network issues
+                _LOGGER.error("Unable to get info for device %s: %s", dev.id, err)
+        return token, devices_detailed
+
+    try:
+        token, api_devices = await hass.async_add_executor_job(_login_and_fetch)
+    except ConfigEntryAuthFailed:
+        _LOGGER.error("Invalid credentials provided for Salus")
+        raise
+    except Exception as err:  # pragma: no cover - network issues
+        _LOGGER.error("Error communicating with Salus: %s", err)
+        return False
+
+    _LOGGER.info("Received security token %s", token)
+
+    devices: list[SalusDevice] = []
+    for api_dev in api_devices:
+        device = SalusDevice(api_dev.id, api_dev.name, api_dev.code, api_dev.online)
+        device.room_temperature = api_dev.current_temperature
+        device.target_temperature = api_dev.target_temperature
+        device.hvac_mode = (
+            HVACMode.HEAT if api_dev.status == "on" else HVACMode.OFF
+        )
+        devices.append(device)
 
     hass.data[DOMAIN][entry.entry_id] = {
         "devices": devices,
         "username": username,
         "password": password,
+        "token": token,
+        "api": api,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _LOGGER.info("Salus integration setup complete")
+    _LOGGER.info(
+        "Salus integration setup complete with %s device(s)", len(devices)
+    )
     return True
 
 
