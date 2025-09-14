@@ -89,7 +89,10 @@ async def async_setup_entry(hass, entry: config_entries.ConfigEntry):
         devices_detailed = []
         for dev in devices_raw:
             try:
-                devices_detailed.append(api.get_device_info(dev.id))
+                detailed = api.get_device_info(dev.id)
+                # Preserve the friendly name parsed from the devices page
+                detailed.name = dev.name or detailed.name
+                devices_detailed.append(detailed)
             except Exception as err:  # pragma: no cover - network issues
                 _LOGGER.error("Unable to get info for device %s: %s", dev.id, err)
         return token, devices_detailed
