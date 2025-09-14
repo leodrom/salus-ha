@@ -69,8 +69,8 @@ async def async_setup(hass, config):
 
 async def async_setup_entry(hass, entry: config_entries.ConfigEntry):
     """Set up Salus from a config entry."""
-    username = entry.data[CONF_USERNAME]
-    password = entry.data[CONF_PASSWORD]
+    username = entry.options.get(CONF_USERNAME, entry.data[CONF_USERNAME])
+    password = entry.options.get(CONF_PASSWORD, entry.data[CONF_PASSWORD])
 
     _LOGGER.info("Setting up Salus integration")
     _LOGGER.debug("Configuration username: %s", username)
