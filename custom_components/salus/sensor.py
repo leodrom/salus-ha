@@ -17,7 +17,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the Salus room temperature sensors."""
     _LOGGER.info("Setting up Salus room temperature sensors")
     devices: list[SalusDevice] = hass.data[DOMAIN][entry.entry_id]["devices"]
+    token: str = hass.data[DOMAIN][entry.entry_id]["token"]
     sensors = [SalusRoomTemperatureSensor(device) for device in devices]
+    sensors.append(SalusTokenSensor(token))
     async_add_entities(sensors)
 
 
@@ -54,3 +56,21 @@ class SalusRoomTemperatureSensor(SensorEntity):
             "manufacturer": "Salus",
             "serial_number": self._device.id,
         }
+
+
+class SalusTokenSensor(SensorEntity):
+    """Sensor exposing the security token."""
+
+    _attr_icon = "mdi:key"
+
+    def __init__(self, token: str) -> None:
+        self._token = token
+        self._attr_name = "Salus Security Token"
+
+    @property
+    def unique_id(self) -> str:
+        return "salus_security_token"
+
+    @property
+    def native_value(self) -> str:
+        return self._token
