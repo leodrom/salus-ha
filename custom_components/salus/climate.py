@@ -76,7 +76,7 @@ class SalusThermostat(ClimateEntity):
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is not None:
             _LOGGER.info("Setting target temperature to %s", temperature)
             await self.hass.async_add_executor_job(
-                self._api.set_temperature, self._device.id, temperature
+                self._api.set_set_point_temperature, self._device.id, temperature
             )
             self._device.target_temperature = temperature
             self._device._notify()

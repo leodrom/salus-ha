@@ -35,7 +35,7 @@ class Salus:
         # Last HTTP response
         self.response = requests.Response()
         # Security token returned after login
-        self.token = ''
+        self.security_token: str = ''
 
     # Parse the <title> from HTML response and detect page type
     def parse_page_name(self):
@@ -72,7 +72,7 @@ class Salus:
         class TokenParser(HTMLParser):
             def __init__(self):
                 super().__init__()
-                self.token = ''
+                self.token_value = ''
                 self.is_token = False
 
             def handle_starttag(self, tag, attrs):
@@ -82,13 +82,13 @@ class Salus:
                         if attr[0] == 'id' and attr[1] == 'token':
                             token_found = True
                         if token_found and attr[0] == 'value':
-                            self.token = attr[1]
+                            self.token_value = attr[1]
                             self.is_token = True
 
         parser = TokenParser()
         parser.feed(self.response.text)
-        self.token = parser.token
-        return self.token
+        self.security_token = parser.token_value
+        return self.security_token
 
     # Parse devices list page and extract devices
     def parse_devices_page(self):
@@ -122,6 +122,7 @@ class Salus:
                     self.current_device.code = parts[0]
                     self.current_device.name = ' '.join(parts[1:]) if len(parts) > 1 else ''
                     self.current_device.online = self.current_device_status == 'online'
+                    self.current_device.status = self.current_device_status or 'unknown'
                     self.devices.append(self.current_device)
                     self.current_device = None
                     self.current_device_status = ''
@@ -130,6 +131,37 @@ class Salus:
         parser = DeviceParser()
         parser.feed(self.response.text)
         return parser.devices
+
+    def fetch_devices_page(self):
+        """Load the devices overview page and store the response."""
+        url = "https://salus-it500.com/public/devices.php"
+        params = {"token": self.security_token} if self.security_token else None
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        self.response = response
+        return response
+
+    def get_devices(self):
+        """Return a list of devices parsed from the devices overview page."""
+        self.fetch_devices_page()
+        return self.parse_devices_page()
+
+    def get_device_online_status(self, device_id: str) -> str:
+        """Return the online status string for a specific device."""
+        if not self.security_token:
+            raise ValueError("Security token is required to query device status")
+
+        timestamp = int(time.time() * 1000)
+        url = "https://salus-it500.com/public/ajax_device_online_status.php"
+        params = {
+            "devId": device_id,
+            "token": self.security_token,
+            "_": timestamp,
+        }
+        _LOGGER.debug("Requesting device online status: %s", params)
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        return response.text.strip()
 
     # Perform login to https://salus-it500.com/public/login.php
     def do_login(self, username='', password=''):
@@ -176,7 +208,7 @@ class Salus:
         timestamp = int(time.time() * 1000)
         url = (
             f"https://salus-it500.com/public/ajax_device_values.php"
-            f"?devId={device_id}&token={self.token}&_={timestamp}"
+            f"?devId={device_id}&token={self.security_token}&_={timestamp}"
         )
         _LOGGER.debug("Requesting device values: %s", url)
         response = self.session.get(url)
@@ -217,10 +249,10 @@ class Salus:
         return values.get("signal", values.get("signalLevel", "unknown"))
 
     # Set target temperature
-    def set_temperature(self, dev_id, temperature):
+    def set_set_point_temperature(self, dev_id, temperature):
         url = "https://salus-it500.com/includes/set.php"
         payload = {
-            'token': self.token,
+            'token': self.security_token,
             'tempUnit': 0,  # Celsius
             'devId': dev_id,
             'current_tempZ1_set': 1,
@@ -233,7 +265,7 @@ class Salus:
     def set_hvac_mode(self, dev_id, hvac_mode):
         url = "https://salus-it500.com/includes/set.php"
         payload = {
-            'token': self.token,
+            'token': self.security_token,
             'devId': dev_id,
         }
 
